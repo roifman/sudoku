@@ -23,12 +23,9 @@ ApplicationWindow {
         anchors.centerIn: parent
         spacing: 20
 
-        /* Difficulty buttons on the left + Board on the right */
         RowLayout {
             spacing: 20
             anchors.horizontalCenter: parent.horizontalCenter
-
-            /* Difficulty buttons */
             Column {
                 spacing: 10
 
