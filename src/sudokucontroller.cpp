@@ -1,36 +1,139 @@
 #include "sudokucontroller.h"
-#include "filepuzzlesource.h"
+#include <exception>
+#include <QDebug>
+#include <random>
+#include <vector>
+#include <variant>
 
 SudokuController::SudokuController(QObject* parent)
-    : QObject(parent)
+    : QObject(parent),
+      board_(std::make_unique<Board>()),                 // RAII через unique_ptr
+      testSource_(std::make_unique<FilePuzzleSource>("puzzle.txt")),
+      solver_(std::make_shared<Solver>())                // shared_ptr для примера
 {
-    source_ = std::make_unique<FilePuzzleSource>("puzzle.txt");
-    loadInitial();
+    generatePuzzle();
 }
 
-void SudokuController::loadInitial() {
-    auto loaded = source_->load();
-    if (!loaded)
-        throw std::runtime_error("Failed to load puzzle");
-    board_ = std::make_shared<Board>(*loaded);
+void SudokuController::touchBoard() {
+    ++revision_;
     emit boardChanged();
 }
 
-QVariantList SudokuController::board() const {
-    QVariantList list;
-    for (int r = 0; r < Board::Size; ++r)
-        for (int c = 0; c < Board::Size; ++c)
-            list.append(board_->get(r, c));
-    return list;
+int SudokuController::getCell(int row, int col) const {
+    return board_->get(row, col);
 }
 
 void SudokuController::setCell(int row, int col, int value) {
-    if (!board_->isFixed(row, col)) {
+    try {
         board_->set(row, col, value);
-        emit boardChanged();
+        hasInvalidInput_ = false;
+        touchBoard();
+    } catch (const std::exception& e) {
+        hasInvalidInput_ = true;
+        emit invalidInput(QString::fromStdString(e.what()));
     }
 }
 
-void SudokuController::reset() {
-    loadInitial();
+void SudokuController::solve() {
+    if (hasInvalidInput_) {
+        emit invalidInput("Cannot solve: board contains invalid values.");
+        return;
+    }
+
+    if (!solver_->solve(*board_)) {
+        emit invalidInput("Puzzle cannot be solved.");
+        return;
+    }
+
+    touchBoard();
+}
+
+void SudokuController::generatePuzzle() {
+    board_->clear();
+
+    // 1. Создаём случайную перестановку 1–9 (современный C++: std::shuffle)
+    std::array<int, 9> nums = {1,2,3,4,5,6,7,8,9};
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(nums.begin(), nums.end(), gen);
+
+    // 2. Заполняем первую строку случайно — это даёт уникальное решение
+    for (int c = 0; c < 9; ++c)
+        board_->set(0, c, nums[c]);
+
+    // 3. Решаем — получаем случайное полное решение
+    solver_->solve(*board_);
+
+    // 4. Удаляем 40 клеток — создаём пазл
+    std::uniform_int_distribution<int> dist(0, 8);
+
+    for (int i = 0; i < 40; ++i) {
+        int r = dist(gen);
+        int c = dist(gen);
+        board_->set(r, c, 0);
+    }
+
+    hasInvalidInput_ = false;
+    touchBoard();
+}
+
+void SudokuController::loadPuzzle() {
+    auto loaded = testSource_->load();
+
+    if (!loaded.has_value()) {
+        emit invalidInput("Failed to load puzzle from puzzle.txt");
+        return;
+    }
+
+    *board_ = *loaded;
+    hasInvalidInput_ = false;
+    touchBoard();
+}
+
+void SudokuController::checkSolved() {
+    // std::variant + std::visit — современный способ обработки результата
+    CheckResult result = board_->check();
+
+    std::visit([&](auto&& res) {
+        using T = std::decay_t<decltype(res)>;
+        if constexpr (std::is_same_v<T, CheckOk>) {
+            emit invalidInput("Puzzle solved correctly!");
+        } else if constexpr (std::is_same_v<T, CheckError>) {
+            emit invalidInput(QString::fromStdString(res.message));
+        }
+    }, result);
+}
+
+void SudokuController::hint() {
+    Board solved = *board_;
+
+    if (!solver_->solve(solved)) {
+        emit invalidInput("Puzzle cannot be solved.");
+        return;
+    }
+
+    std::vector<std::pair<int,int>> emptyCells;
+
+    for (int r = 0; r < 9; ++r)
+        for (int c = 0; c < 9; ++c)
+            if (board_->get(r, c) == 0)
+                emptyCells.emplace_back(r, c);
+
+    if (emptyCells.empty()) {
+        emit invalidInput("No empty cells left.");
+        return;
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, static_cast<int>(emptyCells.size()) - 1);
+
+    auto [r, c] = emptyCells[dist(gen)];
+
+    try {
+        board_->set(r, c, solved.get(r, c));
+        touchBoard();
+    } catch (const std::exception& e) {
+        emit invalidInput(QString::fromStdString(e.what()));
+    }
 }

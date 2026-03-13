@@ -4,21 +4,22 @@
 FilePuzzleSource::FilePuzzleSource(std::string path)
     : path_(std::move(path)) {}
 
-std::optional<Board> FilePuzzleSource::load() {
+std::optional<Board> FilePuzzleSource::load() const noexcept {
     std::ifstream in(path_);
-    if (!in)
+    if (!in.is_open())
         return std::nullopt;
 
-    Board board;
-    for (int r = 0; r < Board::Size; ++r)
-        for (int c = 0; c < Board::Size; ++c) {
+    Board b;
+
+    for (int r = 0; r < 9; ++r) {
+        for (int c = 0; c < 9; ++c) {
             int v;
             if (!(in >> v))
                 return std::nullopt;
-            board.set(r, c, v);
-            if (v != 0)
-                board.setFixed(r, c, true);
-        }
 
-    return board;
+            b.set(r, c, v);
+        }
+    }
+
+    return b;
 }

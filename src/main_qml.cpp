@@ -1,8 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
-
 #include "sudokucontroller.h"
+using namespace Qt::StringLiterals;
 
 int main(int argc, char *argv[])
 {
@@ -10,12 +9,20 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    SudokuController controller;
-    engine.rootContext()->setContextProperty("sudokuController", &controller);
+    qmlRegisterType<SudokuController>("Sudoku", 1, 0, "SudokuController");
 
-    engine.loadFromModule("SudokuUI", "Main");
-    if (engine.rootObjects().isEmpty())
-        return -1;
+    const QUrl url(u"qrc:/qml/main.qml"_s);
+
+    QObject::connect(
+        &engine, &QQmlApplicationEngine::objectCreated,
+        &app, [url](QObject *obj, const QUrl &objUrl) {
+            if (!obj && url == objUrl)
+                QCoreApplication::exit(-1);
+        },
+        Qt::QueuedConnection
+    );
+
+    engine.load(url);
 
     return app.exec();
 }

@@ -2,8 +2,6 @@
 #include <optional>
 #include "board.h"
 
-// Интерфейс источника головоломки.
-// Используем std::optional для безопасной загрузки.
 class IPuzzleSource {
 public:
     virtual ~IPuzzleSource() = default;

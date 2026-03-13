@@ -1,26 +1,50 @@
 #pragma once
+
 #include <array>
-#include <stdexcept>
+#include <variant>
+#include <string>
 
-// Board — простая модель 9×9.
-class Board {
-public:
-    static constexpr int Size = 9;
-
-    Board();
-
-    int get(int row, int col) const;
-    void set(int row, int col, int value);
-
-    bool isFixed(int row, int col) const;
-    void setFixed(int row, int col, bool fixed);
-
-private:
-    static constexpr bool isValidIndex(int i) noexcept {
-        return i >= 0 && i < Size;
-    }
-
-    std::array<std::array<int, Size>, Size> cells_{};
-    std::array<std::array<bool, Size>, Size> fixed_{};
+// CheckResult: современный способ вернуть "успех или ошибку" без bool + строка
+struct CheckOk {};
+struct CheckError {
+    std::string message;
 };
 
+// std::variant даёт типобезопасный результат проверки
+using CheckResult = std::variant<CheckOk, CheckError>;
+
+class Board {
+public:
+    Board();
+
+    // get возвращает значение клетки (0 означает пустую)
+    int get(int row, int col) const;
+
+    // set бросает исключения при нарушении инвариантов (современный, безопасный API)
+    void set(int row, int col, int value);
+
+    // clear гарантирует, что доска всегда в валидном состоянии (RAII-подход)
+    void clear();
+
+    // isValid проверяет корректность значения в позиции
+    bool isValid(int row, int col, int value) const;
+
+    // solve использует backtracking для поиска решения
+    bool solve();
+
+    // isSolved проверяет, что доска полностью и корректно заполнена
+    bool isSolved() const;
+
+    // check возвращает variant вместо bool + сообщение
+    CheckResult check() const;
+
+    // оператор копирования — безопасный и простой
+    Board& operator=(const Board& other);
+
+private:
+    // cells_ хранит текущее состояние доски
+    std::array<std::array<int, 9>, 9> cells_;
+
+    // рекурсивный backtracking-алгоритм
+    bool solveRecursive(int row, int col);
+};

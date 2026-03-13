@@ -1,12 +1,16 @@
 #pragma once
-#include "ipuzzlesource.h"
-#include <string>
 
-// FilePuzzleSource — загрузка судоку из текстового файла.
-class FilePuzzleSource : public IPuzzleSource {
+#include <string>
+#include <optional>
+#include "board.h"
+
+// FilePuzzleSource: современный способ загрузки данных с использованием std::optional
+class FilePuzzleSource {
 public:
     explicit FilePuzzleSource(std::string path);
-    std::optional<Board> load() override;
+
+    // load возвращает optional — явный способ выразить "может не загрузиться"
+    std::optional<Board> load() const noexcept;
 
 private:
     std::string path_;
