@@ -21,7 +21,9 @@ ApplicationWindow {
     /* Hint tracking */
     property int hintsUsed: 0
     property int maxHints: 3
-
+    Component.onCompleted: {
+        timerRunning = true
+    }
     /* Game timer */
     Timer {
         id: gameTimer
