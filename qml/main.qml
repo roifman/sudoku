@@ -14,6 +14,23 @@ ApplicationWindow {
     property int selectedRow: -1
     property int selectedCol: -1
 
+    /* Timer state */
+    property int elapsedSeconds: 0
+    property bool timerRunning: false
+
+    /* Hint tracking */
+    property int hintsUsed: 0
+    property int maxHints: 3
+
+    /* Game timer */
+    Timer {
+        id: gameTimer
+        interval: 1000
+        repeat: true
+        running: timerRunning
+        onTriggered: elapsedSeconds += 1
+    }
+
     /* C++-registered controller instance */
     SudokuController {
         id: sudokuController
@@ -23,25 +40,55 @@ ApplicationWindow {
         anchors.centerIn: parent
         spacing: 20
 
+        /* Timer label */
+        Text {
+            id: timerLabel
+            font.pixelSize: 20
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: {
+                let m = Math.floor(elapsedSeconds / 60)
+                let s = elapsedSeconds % 60
+                let mm = m < 10 ? "0" + m : "" + m
+                let ss = s < 10 ? "0" + s : "" + s
+                return mm + ":" + ss
+            }
+        }
+
         RowLayout {
             spacing: 20
             anchors.horizontalCenter: parent.horizontalCenter
+
             Column {
                 spacing: 10
 
                 Button {
                     text: "Easy"
-                    onClicked: sudokuController.generateEasy()
+                    onClicked: {
+                        sudokuController.generateEasy()
+                        elapsedSeconds = 0
+                        timerRunning = true
+                        hintsUsed = 0
+                    }
                 }
 
                 Button {
                     text: "Medium"
-                    onClicked: sudokuController.generateMedium()
+                    onClicked: {
+                        sudokuController.generateMedium()
+                        elapsedSeconds = 0
+                        timerRunning = true
+                        hintsUsed = 0
+                    }
                 }
 
                 Button {
                     text: "Hard"
-                    onClicked: sudokuController.generateHard()
+                    onClicked: {
+                        sudokuController.generateHard()
+                        elapsedSeconds = 0
+                        timerRunning = true
+                        hintsUsed = 0
+                    }
                 }
             }
 
@@ -115,11 +162,9 @@ ApplicationWindow {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                /* Update highlight */
                                 window.selectedRow = r
                                 window.selectedCol = c
 
-                                /* Enable editing */
                                 editor.text = cellText.text
                                 editor.visible = true
                                 editor.focus = true
@@ -138,22 +183,40 @@ ApplicationWindow {
 
             Button {
                 text: "Load Puzzle"
-                onClicked: sudokuController.loadPuzzle()
+                onClicked: {
+                    sudokuController.loadPuzzle()
+                    elapsedSeconds = 0
+                    timerRunning = true
+                    hintsUsed = 0
+                }
             }
 
             Button {
                 text: "Hint"
-                onClicked: sudokuController.hint()
+                onClicked: {
+                    sudokuController.hint()
+                    hintsUsed += 1
+
+                    if (hintsUsed >= maxHints) {
+                        timerRunning = false
+                    }
+                }
             }
 
             Button {
                 text: "Solve"
-                onClicked: sudokuController.solve()
+                onClicked: {
+                    sudokuController.solve()
+                    timerRunning = false
+                }
             }
 
             Button {
                 text: "Check"
-                onClicked: sudokuController.checkSolved()
+                onClicked: {
+                    sudokuController.checkSolved()
+                    timerRunning = false
+                }
             }
         }
     }
