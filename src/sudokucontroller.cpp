@@ -51,20 +51,20 @@ void SudokuController::solve() {
 void SudokuController::generatePuzzle() {
     board_->clear();
 
-    //std::shuffle)
+    //std::shuffle
     std::array<int, 9> nums = {1,2,3,4,5,6,7,8,9};
     std::random_device rd;
     std::mt19937 gen(rd());
     std::shuffle(nums.begin(), nums.end(), gen);
 
-    //Заполняем первую строку случайно — это даёт уникальное решение
+    //первую строку случайно — это даёт уникальное решение
     for (int c = 0; c < 9; ++c)
         board_->set(0, c, nums[c]);
 
     //получаем случайное полное решение
     solver_->solve(*board_);
 
-    //Удаляем 40 клеток — создаём пазл
+    //удаляем 40 клеток —  пазл
     std::uniform_int_distribution<int> dist(0, 8);
 
     for (int i = 0; i < 40; ++i) {

@@ -116,7 +116,7 @@ ApplicationWindow {
                         color: (window.selectedRow === r && window.selectedCol === c)
                                ? "#a0c4ff"
                                : ((Math.floor(r / 3) + Math.floor(c / 3)) % 2 === 0
-                                    ? "#f0f0f0"
+                                    ? "#c0c0c0"
                                     : "#ffffff")
 
                         border.color: "black"
