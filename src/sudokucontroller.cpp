@@ -51,20 +51,20 @@ void SudokuController::solve() {
 void SudokuController::generatePuzzle() {
     board_->clear();
 
-    // 1. Создаём случайную перестановку 1–9 (современный C++: std::shuffle)
+    //std::shuffle)
     std::array<int, 9> nums = {1,2,3,4,5,6,7,8,9};
     std::random_device rd;
     std::mt19937 gen(rd());
     std::shuffle(nums.begin(), nums.end(), gen);
 
-    // 2. Заполняем первую строку случайно — это даёт уникальное решение
+    //Заполняем первую строку случайно — это даёт уникальное решение
     for (int c = 0; c < 9; ++c)
         board_->set(0, c, nums[c]);
 
-    // 3. Решаем — получаем случайное полное решение
+    //получаем случайное полное решение
     solver_->solve(*board_);
 
-    // 4. Удаляем 40 клеток — создаём пазл
+    //Удаляем 40 клеток — создаём пазл
     std::uniform_int_distribution<int> dist(0, 8);
 
     for (int i = 0; i < 40; ++i) {
@@ -91,7 +91,7 @@ void SudokuController::loadPuzzle() {
 }
 
 void SudokuController::checkSolved() {
-    // std::variant + std::visit — современный способ обработки результата
+    // std::variant + std::visit
     CheckResult result = board_->check();
 
     std::visit([&](auto&& res) {
@@ -136,4 +136,21 @@ void SudokuController::hint() {
     } catch (const std::exception& e) {
         emit invalidInput(QString::fromStdString(e.what()));
     }
+}
+
+void SudokuController::generatePuzzleWithDifficulty(int level) {
+    board_->generate(level);
+    touchBoard();
+}
+
+void SudokuController::generateEasy() {
+    generatePuzzleWithDifficulty(1);
+}
+
+void SudokuController::generateMedium() {
+    generatePuzzleWithDifficulty(2);
+}
+
+void SudokuController::generateHard() {
+    generatePuzzleWithDifficulty(3);
 }

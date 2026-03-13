@@ -12,7 +12,6 @@ TEST(BoardTest, SetRejectsInvalidValue) {
     Board b;
     b.set(0, 0, 5);
 
-    // Попытка поставить 5 в ту же строку — ошибка
     EXPECT_THROW(b.set(0, 1, 5), std::invalid_argument);
 }
 
@@ -27,7 +26,6 @@ TEST(BoardTest, SetAcceptsValidValue) {
 TEST(BoardTest, SolveSimplePuzzle) {
     Board b;
 
-    // Минимальный пазл: одна пустая клетка
     b.set(0, 0, 5);
     b.set(0, 1, 3);
     b.set(0, 2, 0);

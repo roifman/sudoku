@@ -1,5 +1,6 @@
 #include "board.h"
 #include <stdexcept>
+#include <cstdlib>
 
 Board::Board() {
     clear();
@@ -13,7 +14,6 @@ Board& Board::operator=(const Board& other) {
 }
 
 void Board::clear() {
-    // RAII: доска всегда в корректном состоянии после clear()
     for (int r = 0; r < 9; ++r)
         for (int c = 0; c < 9; ++c)
             cells_[r][c] = 0;
@@ -24,7 +24,6 @@ int Board::get(int row, int col) const {
 }
 
 void Board::set(int row, int col, int value) {
-    // Современный подход: исключения защищают инварианты модели
     if (!isValid(row, col, value))
         throw std::invalid_argument("Invalid value for this position");
 
@@ -101,4 +100,32 @@ CheckResult Board::check() const {
     if (!isSolved())
         return CheckError{"Puzzle is not solved correctly."};
     return CheckOk{};
+}
+
+
+void Board::generate(int difficulty) {
+    generateSolvedBoard();
+
+    int removeCount = 0;
+    switch (difficulty) {
+        case 1: removeCount = 30; break; // easy
+        case 2: removeCount = 40; break; // medium
+        case 3: removeCount = 50; break; // hard
+        default: removeCount = 40; break;
+    }
+
+    removeCells(removeCount);
+}
+
+void Board::generateSolvedBoard() {
+    clear();
+    solve();  //backtracking создаёт валидную решённую доску
+}
+
+void Board::removeCells(int count) {
+    for (int i = 0; i < count; i++) {
+        int r = rand() % 9;
+        int c = rand() % 9;
+        cells_[r][c] = 0;
+    }
 }

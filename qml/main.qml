@@ -10,6 +10,10 @@ ApplicationWindow {
     visible: true
     title: "Sudoku"
 
+    /* Highlight state */
+    property int selectedRow: -1
+    property int selectedCol: -1
+
     /* C++-registered controller instance */
     SudokuController {
         id: sudokuController
@@ -36,8 +40,12 @@ ApplicationWindow {
                     property int r: Math.floor(index / 9)
                     property int c: index % 9
 
-                    color: ((Math.floor(r / 3) + Math.floor(c / 3)) % 2 === 0)
-                           ? "#f0f0f0" : "#ffffff"
+                    /* Highlight selected cell */
+                    color: (window.selectedRow === r && window.selectedCol === c)
+                           ? "#a0c4ff"
+                           : ((Math.floor(r / 3) + Math.floor(c / 3)) % 2 === 0
+                                ? "#f0f0f0"
+                                : "#ffffff")
 
                     border.color: "black"
                     border.width: 1
@@ -84,6 +92,11 @@ ApplicationWindow {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
+                            /* Update highlight */
+                            window.selectedRow = r
+                            window.selectedCol = c
+
+                            /* Enable editing */
                             editor.text = cellText.text
                             editor.visible = true
                             editor.focus = true
@@ -95,7 +108,7 @@ ApplicationWindow {
         }
 
         RowLayout {
-            spacing: 20
+            spacing: 10
             anchors.horizontalCenter: parent.horizontalCenter
 
             Button {
@@ -109,8 +122,18 @@ ApplicationWindow {
             }
 
             Button {
-                text: "Generate"
-                onClicked: sudokuController.generatePuzzle()
+                text: "Easy"
+                onClicked: sudokuController.generateEasy()
+            }
+
+            Button {
+                text: "Medium"
+                onClicked: sudokuController.generateMedium()
+            }
+
+            Button {
+                text: "Hard"
+                onClicked: sudokuController.generateHard()
             }
 
             Button {
@@ -125,7 +148,7 @@ ApplicationWindow {
         }
     }
 
-    /* Minimal Qt6-compatible adjustment to preserve original dialog UI */
+    /* Minimal Qt6-compatible dialog */
     Dialog {
         id: messageDialog
         title: "Message"
