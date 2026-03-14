@@ -4,9 +4,11 @@ project(sudoku_qml LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 COMPONENTS Quick Qml Core REQUIRED)
+set(QT_FEATURE_vulkan OFF CACHE BOOL "" FORCE)
 
-#object library
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Qml Core)
+
+#object library with shared code
 add_library(sudoku_objects OBJECT
     src/board.cpp
     src/sudokucontroller.cpp
@@ -37,12 +39,13 @@ target_include_directories(sudoku_qml PRIVATE include)
 
 target_link_libraries(sudoku_qml PRIVATE Qt6::Quick Qt6::Qml Qt6::Core)
 
-#QML resources
+# QML resources
 qt_add_resources(sudoku_qml "qml_resources"
     PREFIX "/"
     FILES
         qml/main.qml
 )
+
 #tests
 enable_testing()
 add_subdirectory(tests)

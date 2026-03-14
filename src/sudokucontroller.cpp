@@ -7,16 +7,16 @@
 
 SudokuController::SudokuController(QObject* parent)
     : QObject(parent),
-      board_(std::make_unique<Board>()),                 // RAII через unique_ptr
+      board_(std::make_unique<Board>()),                 // RAII by unique_ptr because only sudokucontroller has access to it
       testSource_(std::make_unique<FilePuzzleSource>("puzzle.txt")),
-      solver_(std::make_shared<Solver>())                // shared_ptr для примера
+      solver_(std::make_shared<Solver>())                // shared_ptr not really needed but as an expample 
 {
     generatePuzzle();
 }
 
 void SudokuController::touchBoard() {
     ++revision_;
-    emit boardChanged();
+    emit boardChanged(); //qt signal
 }
 
 int SudokuController::getCell(int row, int col) const {
@@ -57,14 +57,14 @@ void SudokuController::generatePuzzle() {
     std::mt19937 gen(rd());
     std::shuffle(nums.begin(), nums.end(), gen);
 
-    //первую строку случайно — это даёт уникальное решение
+    //первую строку случайно  = уникальное решение
     for (int c = 0; c < 9; ++c)
         board_->set(0, c, nums[c]);
 
     //получаем случайное полное решение
     solver_->solve(*board_);
 
-    //удаляем 40 клеток —  пазл
+    //удаляем 40 клеток = пазл
     std::uniform_int_distribution<int> dist(0, 8);
 
     for (int i = 0; i < 40; ++i) {
@@ -94,9 +94,9 @@ void SudokuController::checkSolved() {
     // std::variant + std::visit
     CheckResult result = board_->check();
 
-    std::visit([&](auto&& res) {
-        using T = std::decay_t<decltype(res)>;
-        if constexpr (std::is_same_v<T, CheckOk>) {
+    std::visit([&](auto&& res) { //switch for types
+        using T = std::decay_t<decltype(res)>; //converts reference tp type 
+        if constexpr (std::is_same_v<T, CheckOk>) { //constexpr needed for compile-time computation for type based operation
             emit invalidInput("Puzzle solved correctly!");
         } else if constexpr (std::is_same_v<T, CheckError>) {
             emit invalidInput(QString::fromStdString(res.message));
@@ -126,7 +126,7 @@ void SudokuController::hint() {
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, static_cast<int>(emptyCells.size()) - 1);
+    std::uniform_int_distribution<int> dist(0, static_cast<int>(emptyCells.size()) - 1); //in our limits
 
     auto [r, c] = emptyCells[dist(gen)];
 

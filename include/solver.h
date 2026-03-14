@@ -3,7 +3,7 @@
 
 class Solver {
 public:
-    // solve использует backtracking из Board
+    //backtracking из Board
     bool solve(Board& board) const {
         return board.solve();
     }
